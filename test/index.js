@@ -1,5 +1,6 @@
 'use strict';
 
+const assert = require('assert');
 const createRegressionBenchmark = require('..');
 
 const benchmarks = createRegressionBenchmark(
@@ -29,10 +30,38 @@ benchmarks.add(
     { setup }
 );
 
-benchmarks.run().catch(err => {
-    console.error(err.stack);
-    process.exit(1);
+const selftest = createRegressionBenchmark(
+    {}, []
+);
+
+selftest.suite('async support', (suite) => {
+    suite.add(
+        'async setup',
+        (client, { completed }) => assert(completed),
+        { setup: asyncSetup },
+    );
+
+    suite.add(
+        'async fn',
+        (client, ctx) => {
+            assert(ctx.running !== true);
+            ctx.running = true;
+
+            return new Promise(resolve => setTimeout(() => {
+                ctx.running = false;
+                resolve();
+            }, 100));
+        },
+        { setup: asyncSetup },
+    );
 });
+
+benchmarks.run()
+    .then(() => selftest.run())
+    .catch(err => {
+        console.error(err.stack);
+        process.exit(1);
+    });
 
 function setup(client) {
     const registry = new client.Registry();
@@ -47,4 +76,10 @@ function setup(client) {
     histogram.observe(1, { a: 1, b: 1 });
 
     return {registry, histogram};
+}
+
+async function asyncSetup() {
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    return { completed: {} };
 }

@@ -35,6 +35,15 @@ benchmarks.add(
     { setup }
 );
 
+benchmarks.add(
+    'asynchronous',
+    async (client, { histogram }) => {
+        const result = await lookup();
+        return result.name;
+    },
+    { setup }
+);
+
 benchmarks.run().catch(err => {
     console.error(err.stack);
     process.exit(1);
