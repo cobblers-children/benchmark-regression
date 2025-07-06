@@ -44,6 +44,18 @@ benchmarks.add(
     { setup }
 );
 
+
+benchmarks.add(
+    'skippable',
+    (client, { histogram }) => histogram.observe(1, { a: 1, b: 1 }),
+    { 
+        setup,
+        start: (event) => (event.target.name !== 'prom-client@10.1.3') // function not supported or broken in this version
+    }
+);
+
+
+
 benchmarks.run().catch(err => {
     console.error(err.stack);
     process.exit(1);

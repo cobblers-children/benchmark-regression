@@ -28,14 +28,13 @@ function createRegressionBenchmark(baseModule, comparisonModules = []) {
             const bucket = buckets[bucketName];
 
             for (const benchmarkName of Object.keys(bucket)) {
-                const { fn, opts: { setup, teardown } } = bucket[benchmarkName];
+                const { fn, opts: { setup, teardown, start = undefined } } = bucket[benchmarkName];
 
                 const fastest = { time: -Infinity };
                 const slowest = { time: +Infinity };
 
                 for (const testModule of testModules) {
                     const name = `${bucketName} ➭ ${benchmarkName} ➭ ${testModule.name}`;
-
                     let ctx;
 
                     const result = await new Promise(async (resolve, reject) => {
@@ -86,6 +85,19 @@ function createRegressionBenchmark(baseModule, comparisonModules = []) {
                                 });
                             }
                         });
+
+
+                        if (start !== undefined) {
+                            // fake a start() call early
+                            bench.on('start', start);
+                            const cancelled = (bench.emit('start') === false);
+                            bench.off('start', start);
+
+                            if (cancelled) {
+                                bench.emit('complete');
+                                return;
+                            }
+                        }
 
                         ctx = await Promise.resolve(setup(testModule.module));
                         bench.run();

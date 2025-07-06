@@ -54,6 +54,19 @@ selftest.suite('async support', (suite) => {
         },
         { setup: asyncSetup },
     );
+
+    suite.add(
+        'start callback',
+        () => {
+            assert.fail('run should have been skipped');
+        },
+        {
+            setup: () => assert.fail('Setup should have been skipped'),
+            start: (event) => {
+                return (event.target.name !== 'async support ➭ start callback ➭ current');
+            }
+        },
+    );
 });
 
 benchmarks.run()
